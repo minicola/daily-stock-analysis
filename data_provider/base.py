@@ -1343,6 +1343,41 @@ class DataFetcherManager:
                 continue
         return []
 
+    def get_sector_constituents(self, board_name: str, board_type: str = "concept") -> List[Dict[str, Any]]:
+        """
+        获取板块成分股列表（标准化输出）
+
+        Args:
+            board_name: 板块名称关键词，如 "锂电池"、"新能源车"
+            board_type: "concept" 概念板块 | "industry" 行业板块
+
+        Returns:
+            List[Dict] with keys: code, name, change_pct, price, amount
+        """
+        for fetcher in self._fetchers:
+            if not hasattr(fetcher, "get_board_constituents"):
+                continue
+            try:
+                raw_df = fetcher.get_board_constituents(board_name, board_type)
+                if raw_df is not None and not raw_df.empty:
+                    results = []
+                    for _, row in raw_df.iterrows():
+                        code = str(row.get('代码', row.get('股票代码', ''))).strip()
+                        name = str(row.get('名称', row.get('股票名称', ''))).strip()
+                        if code and len(code) == 6:
+                            results.append({
+                                'code': code,
+                                'name': name,
+                                'change_pct': float(row.get('涨跌幅', 0) or 0),
+                                'price': float(row.get('最新价', 0) or 0),
+                                'amount': float(row.get('成交额', 0) or 0),
+                            })
+                    return results
+            except Exception as e:
+                logger.warning(f"get_sector_constituents failed via {fetcher.__class__.__name__}: {e}")
+                continue
+        return []
+
     def prefetch_stock_names(self, stock_codes: List[str], use_bulk: bool = False) -> None:
         """
         Pre-fetch stock names into cache before parallel analysis (Issue #455).
