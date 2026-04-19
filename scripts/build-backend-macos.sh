@@ -30,6 +30,14 @@ fi
 npm run build
 popd >/dev/null
 
+log "Building DSA Viz UI..."
+pushd "${ROOT_DIR}/apps/dsa-viz" >/dev/null
+if [[ ! -d node_modules ]]; then
+  npm install
+fi
+npm run build
+popd >/dev/null
+
 log "Building backend executable..."
 if ! "${PYTHON_BIN}" -m PyInstaller --version >/dev/null 2>&1; then
   "${PYTHON_BIN}" -m pip install pyinstaller
@@ -100,7 +108,7 @@ for module in "${hidden_imports[@]}"; do
 done
 
 pushd "${ROOT_DIR}" >/dev/null
-cmd=("${PYTHON_BIN}" -m PyInstaller --name stock_analysis --onedir --noconfirm --noconsole --add-data "static:static" --collect-data litellm --collect-data tiktoken)
+cmd=("${PYTHON_BIN}" -m PyInstaller --name stock_analysis --onedir --noconfirm --noconsole --add-data "static:static" --add-data "apps/dsa-viz/dist:apps/dsa-viz/dist" --collect-data litellm --collect-data tiktoken)
 cmd+=("${hidden_import_args[@]}" "main.py")
 
 echo "Running: ${cmd[*]}"
