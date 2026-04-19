@@ -37,15 +37,24 @@ from src.services.system_config_service import SystemConfigService
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     """Initialize and release shared services for the app lifecycle."""
+    import logging
+    logger = logging.getLogger(__name__)
+
     app.state.system_config_service = SystemConfigService()
     # Eagerly initialize DatabaseManager to avoid a race on the first
     # parallel requests that would otherwise contend on lazy init.
+    # Reset singleton first so a half-initialized instance left over by an
+    # earlier failed attempt does not block proper init now.
     try:
         from src.storage import DatabaseManager
+        DatabaseManager.reset_instance()
         DatabaseManager.get_instance()
-    except Exception:
-        # Don't block app startup on DB init failure - endpoints still surface errors.
-        pass
+        logger.info("DatabaseManager initialized in app lifespan")
+    except Exception as exc:
+        # Surface the failure so a broken init is not silently masked, but
+        # do not block startup - endpoint handlers will still return 500
+        # with the real backend error.
+        logger.error("DatabaseManager lifespan init failed: %s", exc, exc_info=True)
     try:
         yield
     finally:
