@@ -9,6 +9,7 @@ import { ContributionBar } from "./ContributionBar";
 import { HoldingsTable } from "./HoldingsTable";
 import { TradeEntryDrawer } from "./TradeEntryDrawer";
 import { CsvImportDialog } from "./CsvImportDialog";
+import { CashAndActions } from "./CashAndActions";
 import { ErrorPanel } from "@/components/ErrorPanel";
 import { extractApiError } from "@/lib/api/client";
 
@@ -42,6 +43,7 @@ export function PortfolioPage() {
       </div>
       <div className="rounded border border-slate-800 p-2"><ContributionBar positions={positions} /></div>
       <div className="rounded border border-slate-800 p-3"><HoldingsTable positions={positions} onSelect={(p) => setDrawer({ open: true, position: p })} /></div>
+      <CashAndActions />
       <TradeEntryDrawer
         open={drawer.open}
         onClose={() => setDrawer({ open: false, position: null })}
