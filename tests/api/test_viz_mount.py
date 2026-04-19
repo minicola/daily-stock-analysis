@@ -1,11 +1,11 @@
-import pathlib
 from fastapi.testclient import TestClient
 
 
 def test_viz_returns_placeholder_when_dist_missing(tmp_path, monkeypatch):
-    """When apps/dsa-viz/dist is missing, /viz/ returns 404 (graceful, not 500)."""
+    """When apps/dsa-viz/dist is missing (simulated via env pointing to nowhere),
+    /viz/ returns 404 (graceful, not 500)."""
+    monkeypatch.setenv("DSA_VIZ_DIST", str(tmp_path / "nonexistent"))
     from api.app import create_app
-    monkeypatch.chdir(tmp_path)
     app = create_app()
     client = TestClient(app)
     response = client.get("/viz/")

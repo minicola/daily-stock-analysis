@@ -182,9 +182,10 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
     if viz_dist_env:
         viz_dist = Path(viz_dist_env)
     else:
-        # 默认使用当前工作目录下的 apps/dsa-viz/dist；
-        # 部署时若 cwd 不是仓库根，可通过 DSA_VIZ_DIST 显式指定。
-        viz_dist = Path.cwd() / "apps" / "dsa-viz" / "dist"
+        # 默认基于 __file__ 解析到仓库根的 apps/dsa-viz/dist，
+        # 保证无论 uvicorn/PyInstaller 从哪个工作目录启动都能定位到构建产物；
+        # 如需覆盖，可通过 DSA_VIZ_DIST 显式指定。
+        viz_dist = Path(__file__).resolve().parent.parent / "apps" / "dsa-viz" / "dist"
 
     if viz_dist.exists():
         viz_assets = viz_dist / "assets"
