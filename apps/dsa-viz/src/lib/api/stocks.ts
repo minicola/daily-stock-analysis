@@ -15,10 +15,18 @@ export type StockHistoryResponse = {
 };
 
 export type StockQuote = {
-  code: string;
-  price: number;
-  change: number;
-  name?: string;
+  stock_code: string;
+  stock_name?: string | null;
+  current_price: number;
+  change?: number | null;            // 涨跌额
+  change_percent?: number | null;    // 涨跌幅 (已是百分比值，如 0.84 表示 0.84%)
+  open?: number | null;
+  high?: number | null;
+  low?: number | null;
+  prev_close?: number | null;
+  volume?: number | null;
+  amount?: number | null;
+  update_time?: string | null;
 };
 
 export type Period = "daily" | "weekly" | "monthly";

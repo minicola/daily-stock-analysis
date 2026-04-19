@@ -45,7 +45,12 @@ export function MarketPage() {
 
       {quote.data && (
         <div className="text-sm text-slate-300">
-          {quote.data.name ?? quote.data.code} · 现价 {quote.data.price} · 涨跌幅 {(quote.data.change * 100).toFixed(2)}%
+          {quote.data.stock_name ?? quote.data.stock_code} · 现价 {quote.data.current_price.toFixed(2)}
+          {quote.data.change_percent != null && (
+            <span className={quote.data.change_percent >= 0 ? "text-up ml-2" : "text-down ml-2"}>
+              {quote.data.change_percent >= 0 ? "+" : ""}{quote.data.change_percent.toFixed(2)}%
+            </span>
+          )}
         </div>
       )}
 

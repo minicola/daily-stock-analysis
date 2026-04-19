@@ -7,9 +7,16 @@ const mock = new MockAdapter(apiClient);
 
 describe("stocks api", () => {
   it("fetchQuote GETs /v1/stocks/{code}/quote", async () => {
-    mock.onGet("/v1/stocks/600519/quote").reply(200, { code: "600519", price: 1700, change: 0.01 });
+    mock.onGet("/v1/stocks/600519/quote").reply(200, {
+      stock_code: "600519",
+      stock_name: "贵州茅台",
+      current_price: 1700,
+      change: 15,
+      change_percent: 0.84,
+    });
     const q = await fetchQuote("600519");
-    expect(q.price).toBe(1700);
+    expect(q.current_price).toBe(1700);
+    expect(q.change_percent).toBe(0.84);
   });
 
   it("fetchHistory GETs with period/days", async () => {

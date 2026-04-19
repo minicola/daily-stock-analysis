@@ -69,7 +69,7 @@ export function ScreenerPage() {
                 <td className="px-2 py-1 font-mono">{it.code}</td>
                 <td className="px-2 py-1">{it.name}</td>
                 <td className="px-2 py-1">{it.price.toFixed(2)}</td>
-                <td className={`px-2 py-1 ${it.change_pct >= 0 ? "text-up" : "text-down"}`}>{(it.change_pct * 100).toFixed(2)}%</td>
+                <td className={`px-2 py-1 ${it.change_pct >= 0 ? "text-up" : "text-down"}`}>{it.change_pct.toFixed(2)}%</td>
                 <td className="px-2 py-1">{it.score}</td>
                 <td className="px-2 py-1">{it.pe_ratio?.toFixed(1) ?? "-"}</td>
                 <td className="px-2 py-1">{it.total_mv ? (it.total_mv / 1e8).toFixed(1) : "-"}</td>
