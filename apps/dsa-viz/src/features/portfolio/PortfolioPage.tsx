@@ -21,7 +21,8 @@ export function PortfolioPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <a href="/viz/portfolio/trades" className="rounded bg-slate-800 px-3 py-1 text-sm">交易历史</a>
         <button className="rounded bg-blue-600 px-4 py-1 text-sm" onClick={() => setDrawer({ open: true, position: null })}>
           录入交易
         </button>
