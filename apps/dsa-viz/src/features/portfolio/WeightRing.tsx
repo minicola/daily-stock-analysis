@@ -12,7 +12,7 @@ export function WeightRing({ positions }: { positions: Position[] }) {
       series: [{
         type: "pie",
         radius: ["45%", "70%"],
-        data: positions.map((p) => ({ name: p.name ?? p.code, value: p.market_value })),
+        data: positions.map((p) => ({ name: p.symbol, value: p.market_value_base })),
       }],
     });
     return () => chart.dispose();

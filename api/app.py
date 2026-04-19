@@ -38,6 +38,14 @@ from src.services.system_config_service import SystemConfigService
 async def app_lifespan(app: FastAPI):
     """Initialize and release shared services for the app lifecycle."""
     app.state.system_config_service = SystemConfigService()
+    # Eagerly initialize DatabaseManager to avoid a race on the first
+    # parallel requests that would otherwise contend on lazy init.
+    try:
+        from src.storage import DatabaseManager
+        DatabaseManager.get_instance()
+    except Exception:
+        # Don't block app startup on DB init failure - endpoints still surface errors.
+        pass
     try:
         yield
     finally:
