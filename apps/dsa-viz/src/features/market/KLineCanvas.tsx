@@ -10,6 +10,7 @@ type Props = {
 export function KLineCanvas({ candles, indicators }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const paneIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -17,6 +18,7 @@ export function KLineCanvas({ candles, indicators }: Props) {
     return () => {
       if (ref.current) dispose(ref.current);
       chartRef.current = null;
+      paneIdsRef.current = [];
     };
   }, []);
 
@@ -31,8 +33,12 @@ export function KLineCanvas({ candles, indicators }: Props) {
       volume: c.volume,
     }));
     chartRef.current.applyNewData(data);
-    chartRef.current.removeIndicator();
-    indicators.forEach((i) => chartRef.current!.createIndicator(i));
+    paneIdsRef.current.forEach((paneId) => chartRef.current!.removeIndicator(paneId));
+    paneIdsRef.current = [];
+    indicators.forEach((name) => {
+      const paneId = chartRef.current!.createIndicator(name);
+      if (paneId) paneIdsRef.current.push(paneId);
+    });
   }, [candles, indicators]);
 
   return <div ref={ref} className="h-[520px] w-full" />;
