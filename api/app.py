@@ -173,15 +173,47 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
         )
     
     # ============================================================
+    # 静态文件托管（dsa-viz 可视化前端）
+    # ============================================================
+    # 注意：viz 挂载必须在 dsa-web 的 SPA 贪婪 fallback 之前注册，
+    # 否则 "/{full_path:path}" 会拦截 /viz/* 请求。
+
+    viz_dist_env = os.environ.get("DSA_VIZ_DIST")
+    if viz_dist_env:
+        viz_dist = Path(viz_dist_env)
+    else:
+        # 默认使用当前工作目录下的 apps/dsa-viz/dist；
+        # 部署时若 cwd 不是仓库根，可通过 DSA_VIZ_DIST 显式指定。
+        viz_dist = Path.cwd() / "apps" / "dsa-viz" / "dist"
+
+    if viz_dist.exists():
+        viz_assets = viz_dist / "assets"
+        if viz_assets.exists():
+            app.mount("/viz/assets", StaticFiles(directory=viz_assets), name="viz_assets")
+
+        @app.get("/viz", include_in_schema=False)
+        @app.get("/viz/", include_in_schema=False)
+        @app.get("/viz/{full_path:path}", include_in_schema=False)
+        async def serve_viz(full_path: str = ""):
+            """dsa-viz SPA 路由回退 - 服务 apps/dsa-viz/dist 下的静态资源。"""
+            if full_path.startswith("api") or full_path.startswith("assets"):
+                return JSONResponse(status_code=404, content={"error": "not_found"})
+            candidate = viz_dist / full_path
+            if candidate.is_file():
+                content_type, _ = mimetypes.guess_type(str(candidate))
+                return FileResponse(candidate, media_type=content_type)
+            return FileResponse(viz_dist / "index.html")
+
+    # ============================================================
     # 静态文件托管（前端 SPA）
     # ============================================================
-    
+
     if has_frontend:
         # 挂载静态资源目录
         assets_dir = static_dir / "assets"
         if assets_dir.exists():
             app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-        
+
         # SPA 路由回退
         @app.get("/{full_path:path}", include_in_schema=False)
         async def serve_spa(request: Request, full_path: str):
@@ -191,16 +223,16 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
                     status_code=404,
                     content={"error": "not_found", "message": f"API endpoint /{full_path} not found"}
                 )
-            
+
             file_path = static_dir / full_path
             if file_path.exists() and file_path.is_file():
                 # Issue #520: Explicitly resolve MIME type to avoid
                 # browsers rejecting JS modules served as text/plain.
                 content_type, _ = mimetypes.guess_type(str(file_path))
                 return FileResponse(file_path, media_type=content_type)
-            
+
             return FileResponse(static_dir / "index.html")
-    
+
     return app
 
 
