@@ -3,10 +3,11 @@ from fastapi.testclient import TestClient
 
 def test_viz_returns_placeholder_when_dist_missing(tmp_path, monkeypatch):
     """When apps/dsa-viz/dist is missing (simulated via env pointing to nowhere),
-    /viz/ returns 404 (graceful, not 500)."""
+    /viz/ returns 404 (graceful, not 500). We also point static_dir to an
+    empty path so the dsa-web SPA fallback does not intercept /viz/."""
     monkeypatch.setenv("DSA_VIZ_DIST", str(tmp_path / "nonexistent"))
     from api.app import create_app
-    app = create_app()
+    app = create_app(static_dir=tmp_path / "no-static")
     client = TestClient(app)
     response = client.get("/viz/")
     assert response.status_code == 404
