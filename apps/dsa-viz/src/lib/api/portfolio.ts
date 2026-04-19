@@ -90,21 +90,35 @@ export async function deleteTrade(id: number): Promise<{ deleted: boolean }> {
   return res.data;
 }
 
-export type RiskSuggestion = {
-  code: string;
-  action: "add" | "reduce" | "liquidate" | "hold";
-  confidence: number;
-  reason: string;
-  key_levels?: { support?: number; resistance?: number };
+export type StopLossItem = {
+  account_id?: number | null;
+  symbol: string;
+  avg_cost: number;
+  last_price: number;
+  loss_pct: number;              // percent value, e.g. 8.0 means 8%
+  near_threshold_pct: number;
+  is_triggered: boolean;
 };
 
 export type RiskReport = {
-  generated_at: string;
-  suggestions: RiskSuggestion[];
+  as_of: string;
+  account_id?: number | null;
+  cost_method: string;
+  currency: string;
+  thresholds: Record<string, unknown>;
+  concentration: Record<string, unknown>;
+  sector_concentration: Record<string, unknown>;
+  drawdown: Record<string, unknown>;
+  stop_loss: {
+    near_alert: boolean;
+    triggered_count: number;
+    near_count: number;
+    items: StopLossItem[];
+  };
 };
 
-export async function getRiskReport(): Promise<RiskReport> {
-  const res = await apiClient.get<RiskReport>("/v1/portfolio/risk-report");
+export async function getRiskReport(params: { account_id?: number } = {}): Promise<RiskReport> {
+  const res = await apiClient.get<RiskReport>("/v1/portfolio/risk", { params });
   return res.data;
 }
 

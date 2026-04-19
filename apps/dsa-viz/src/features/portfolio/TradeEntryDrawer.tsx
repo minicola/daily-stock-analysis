@@ -40,7 +40,7 @@ export function TradeEntryDrawer({ open, onClose, prefill, currentPosition }: Pr
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["portfolio", "snapshot"] });
       qc.invalidateQueries({ queryKey: ["portfolio", "trades"] });
-      qc.invalidateQueries({ queryKey: ["portfolio", "risk-report"] });
+      qc.invalidateQueries({ queryKey: ["portfolio", "risk"] });
       onClose();
     },
   });
