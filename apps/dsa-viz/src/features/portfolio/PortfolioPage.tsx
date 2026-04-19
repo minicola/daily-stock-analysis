@@ -8,12 +8,14 @@ import { SectorTreemap } from "./SectorTreemap";
 import { ContributionBar } from "./ContributionBar";
 import { HoldingsTable } from "./HoldingsTable";
 import { TradeEntryDrawer } from "./TradeEntryDrawer";
+import { CsvImportDialog } from "./CsvImportDialog";
 import { ErrorPanel } from "@/components/ErrorPanel";
 import { extractApiError } from "@/lib/api/client";
 
 export function PortfolioPage() {
   const snap = useQuery({ queryKey: ["portfolio", "snapshot"], queryFn: getSnapshot, staleTime: 10_000 });
   const [drawer, setDrawer] = useState<{ open: boolean; position: Position | null }>({ open: false, position: null });
+  const [csvOpen, setCsvOpen] = useState(false);
 
   if (snap.isError) return <ErrorPanel error={extractApiError(snap.error)} />;
   if (!snap.data) return <div className="text-slate-400">加载中…</div>;
@@ -23,6 +25,7 @@ export function PortfolioPage() {
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
         <a href="/viz/portfolio/trades" className="rounded bg-slate-800 px-3 py-1 text-sm">交易历史</a>
+        <button className="rounded bg-slate-800 px-3 py-1 text-sm" onClick={() => setCsvOpen(true)}>CSV 导入</button>
         <button className="rounded bg-blue-600 px-4 py-1 text-sm" onClick={() => setDrawer({ open: true, position: null })}>
           录入交易
         </button>
@@ -45,6 +48,7 @@ export function PortfolioPage() {
         prefill={drawer.position ? { code: drawer.position.code, side: "sell" } : undefined}
         currentPosition={drawer.position}
       />
+      <CsvImportDialog open={csvOpen} onClose={() => setCsvOpen(false)} />
     </div>
   );
 }
