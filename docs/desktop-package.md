@@ -183,3 +183,15 @@ PyInstaller 打包时缺少模块，需要在 `scripts/build-backend.ps1` 中增
 1. 解压文件夹
 2. 编辑 `.env` 配置 API Key 和股票列表
 3. 双击 `Daily Stock Analysis.exe` 启动
+
+## DSA Viz 前端 (新)
+
+在执行 `scripts/build-desktop-macos.sh`（以及 Windows / all-OS 对应脚本）之前，请确保 `dsa-viz` 产物已经构建好。后端 PyInstaller 步骤现在会通过 `--add-data` 把 `apps/dsa-viz/dist` 打入 backend 可执行文件；如果 dist 缺失或过期，桌面窗口访问 `/viz/` 时会看到 FastAPI 返回的 404。
+
+- 单独构建：`bash scripts/build-dsa-viz.sh`
+- 后端打包脚本（`scripts/build-backend-macos.sh` / `.ps1`）会自动调用 viz 构建，无需手工介入。
+
+桌面壳通过 `DSA_DESKTOP_ENTRY` 环境变量选择入口页：
+
+- `DSA_DESKTOP_ENTRY=viz`（默认）：加载 `http://127.0.0.1:{port}/viz/`
+- `DSA_DESKTOP_ENTRY=web`：加载旧版 `dsa-web` 界面根路径 `/`

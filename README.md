@@ -415,6 +415,15 @@ LITELLM_MODEL=openai/deepseek-chat
 
 > 也可以使用 `python main.py --serve` (等效命令)
 
+### Visual Desktop (Beta)
+
+仓库内新增可视化前端 `apps/dsa-viz/`（基于 Vite + React + KLineChart + ECharts），覆盖仪表盘、行情 K 线、组合（交易/CSV/资金/公司行为）、账户 CRUD、板块筛选和报告查看。与现有 `apps/dsa-web/` 共存。
+
+1. 构建 viz 产物：`bash scripts/build-dsa-viz.sh`
+2. 启动桌面壳：`cd apps/dsa-desktop && npm run dev`
+
+桌面窗口默认加载 `/viz/`，设置环境变量 `DSA_DESKTOP_ENTRY=web` 可回退到旧版 `dsa-web` 界面。
+
 ## 🗺️ Roadmap
 
 查看已支持的功能和未来规划：[更新日志](docs/CHANGELOG.md)

@@ -464,6 +464,17 @@ Enable the FastAPI service for configuration management and triggering analysis 
 
 ---
 
+## 🖥️ Visual Desktop (Beta)
+
+A new visualization frontend (`apps/dsa-viz/`, built with Vite + React + TS + KLineChart + ECharts) is available alongside `dsa-web`. It ships the daily dashboard, K-line market viewer, portfolio manager (trades / CSV / cash ledger / corporate actions), account CRUD, sector-based screener, and analysis report viewer.
+
+1. Build the viz bundle: `bash scripts/build-dsa-viz.sh`
+2. Start the desktop shell: `cd apps/dsa-desktop && npm run dev`
+
+The desktop window loads `/viz/` by default. Set `DSA_DESKTOP_ENTRY=web` to fall back to the legacy `dsa-web` UI.
+
+---
+
 ## 🔎 Smart Search Autocomplete (MVP)
 
 The home analysis input now behaves more like a search box, reducing the need to memorize exact symbols.
