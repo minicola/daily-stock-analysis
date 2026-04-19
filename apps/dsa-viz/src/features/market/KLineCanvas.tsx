@@ -13,10 +13,11 @@ export function KLineCanvas({ candles, indicators }: Props) {
   const paneIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    if (!ref.current) return;
-    chartRef.current = init(ref.current);
+    const node = ref.current;
+    if (!node) return;
+    chartRef.current = init(node);
     return () => {
-      if (ref.current) dispose(ref.current);
+      dispose(node);
       chartRef.current = null;
       paneIdsRef.current = [];
     };
