@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { KPI } from "@/components/KPI";
 import { ErrorPanel } from "@/components/ErrorPanel";
 import { extractApiError } from "@/lib/api/client";
@@ -16,12 +16,14 @@ export function DashboardPage() {
   const risk = useRiskReport();
   const [drawer, setDrawer] = useState<{ open: boolean; prefill: StopLossItem | null }>({ open: false, prefill: null });
 
-  const onExecute = (item: StopLossItem) => setDrawer({ open: true, prefill: item });
+  const positions = useMemo(() => snap.data?.accounts.flatMap((a) => a.positions) ?? [], [snap.data]);
+  const currentPosition = useMemo(() => {
+    if (!drawer.prefill) return null;
+    return positions.find((p) => p.symbol === drawer.prefill!.symbol) ?? null;
+  }, [drawer.prefill, positions]);
 
   const stopLossItems = risk.data?.stop_loss.items ?? [];
-  const currentPosition = drawer.prefill && snap.data
-    ? snap.data.positions.find((p) => p.code === drawer.prefill!.symbol) ?? null
-    : null;
+  const onExecute = (item: StopLossItem) => setDrawer({ open: true, prefill: item });
 
   return (
     <div className="space-y-4">
@@ -36,9 +38,10 @@ export function DashboardPage() {
       {snap.isError && <ErrorPanel error={extractApiError(snap.error)} />}
       {snap.data && (
         <div className="flex gap-2">
-          <KPI label="总市值" value={snap.data.total_value.toFixed(2)} />
-          <KPI label="今日盈亏" value={snap.data.today_pnl.toFixed(2)} delta={snap.data.today_pnl} />
-          <KPI label="持仓数" value={String(snap.data.positions.length)} />
+          <KPI label="总市值" value={snap.data.total_market_value.toFixed(2)} />
+          <KPI label="浮动盈亏" value={snap.data.unrealized_pnl.toFixed(2)} delta={snap.data.unrealized_pnl} />
+          <KPI label="账户数" value={String(snap.data.account_count)} />
+          <KPI label="持仓数" value={String(positions.length)} />
         </div>
       )}
 
@@ -62,7 +65,7 @@ export function DashboardPage() {
       <TradeEntryDrawer
         open={drawer.open}
         onClose={() => setDrawer({ open: false, prefill: null })}
-        prefill={drawer.prefill ? { code: drawer.prefill.symbol, side: "sell" } : undefined}
+        prefill={drawer.prefill ? { symbol: drawer.prefill.symbol, side: "sell" } : undefined}
         currentPosition={currentPosition}
       />
     </div>

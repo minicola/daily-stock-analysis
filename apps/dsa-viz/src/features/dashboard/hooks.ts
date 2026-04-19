@@ -17,5 +17,5 @@ export function useRiskReport() {
 }
 
 export function useSnapshot() {
-  return useQuery({ queryKey: ["portfolio", "snapshot"], queryFn: getSnapshot, staleTime: 10_000 });
+  return useQuery({ queryKey: ["portfolio", "snapshot"], queryFn: () => getSnapshot(), staleTime: 10_000 });
 }

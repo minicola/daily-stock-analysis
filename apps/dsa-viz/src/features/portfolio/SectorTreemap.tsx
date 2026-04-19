@@ -5,19 +5,22 @@ import type { Position } from "@/lib/api/portfolio";
 export function SectorTreemap({ positions }: { positions: Position[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const data = useMemo(() => {
-    const bySector = new Map<string, Position[]>();
+    const byMarket = new Map<string, Position[]>();
     for (const p of positions) {
-      const key = p.sector ?? "未分类";
-      bySector.set(key, [...(bySector.get(key) ?? []), p]);
+      const key = p.market ?? "未分类";
+      byMarket.set(key, [...(byMarket.get(key) ?? []), p]);
     }
-    return Array.from(bySector.entries()).map(([sector, items]) => ({
-      name: sector,
-      value: items.reduce((s, p) => s + p.market_value, 0),
-      children: items.map((p) => ({
-        name: p.name ?? p.code,
-        value: p.market_value,
-        itemStyle: { color: p.pnl_pct >= 0 ? "#ef4444" : "#10b981" },
-      })),
+    return Array.from(byMarket.entries()).map(([market, items]) => ({
+      name: market,
+      value: items.reduce((s, p) => s + p.market_value_base, 0),
+      children: items.map((p) => {
+        const pnlPct = p.avg_cost > 0 ? (p.last_price - p.avg_cost) / p.avg_cost : 0;
+        return {
+          name: p.symbol,
+          value: p.market_value_base,
+          itemStyle: { color: pnlPct >= 0 ? "#ef4444" : "#10b981" },
+        };
+      }),
     }));
   }, [positions]);
 

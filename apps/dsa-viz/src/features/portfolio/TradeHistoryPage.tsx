@@ -6,8 +6,11 @@ import { extractApiError } from "@/lib/api/client";
 
 export function TradeHistoryPage() {
   const qc = useQueryClient();
-  const [code, setCode] = useState("");
-  const trades = useQuery({ queryKey: ["portfolio", "trades", { code }], queryFn: () => listTrades({ code: code || undefined }) });
+  const [symbol, setSymbol] = useState("");
+  const trades = useQuery({
+    queryKey: ["portfolio", "trades", { symbol }],
+    queryFn: () => listTrades({ symbol: symbol || undefined }),
+  });
   const del = useMutation({
     mutationFn: (id: number) => deleteTrade(id),
     onSuccess: () => {
@@ -18,22 +21,24 @@ export function TradeHistoryPage() {
 
   return (
     <div className="space-y-3">
-      <input className="bg-slate-800 rounded px-3 py-1" placeholder="按代码筛选" value={code} onChange={(e) => setCode(e.target.value)} />
+      <input className="bg-slate-800 rounded px-3 py-1" placeholder="按代码筛选" value={symbol} onChange={(e) => setSymbol(e.target.value)} />
       {trades.isError && <ErrorPanel error={extractApiError(trades.error)} />}
       {del.isError && <ErrorPanel error={extractApiError(del.error)} />}
       <table className="w-full text-sm">
         <thead className="text-slate-400">
-          <tr>{["日期", "账户", "代码", "方向", "股数", "价格", ""].map((h) => <th key={h} className="text-left px-2 py-1">{h}</th>)}</tr>
+          <tr>{["日期", "账户", "代码", "方向", "股数", "价格", "费用", "税", ""].map((h) => <th key={h} className="text-left px-2 py-1">{h}</th>)}</tr>
         </thead>
         <tbody>
           {trades.data?.items.map((t) => (
             <tr key={t.id} className="hover:bg-slate-800">
               <td className="px-2 py-1">{t.trade_date}</td>
               <td className="px-2 py-1">{t.account_id}</td>
-              <td className="px-2 py-1 font-mono">{t.code}</td>
+              <td className="px-2 py-1 font-mono">{t.symbol}</td>
               <td className="px-2 py-1">{t.side === "buy" ? "买入" : "卖出"}</td>
-              <td className="px-2 py-1">{t.shares}</td>
+              <td className="px-2 py-1">{t.quantity}</td>
               <td className="px-2 py-1">{t.price.toFixed(2)}</td>
+              <td className="px-2 py-1">{t.fee.toFixed(2)}</td>
+              <td className="px-2 py-1">{t.tax.toFixed(2)}</td>
               <td className="px-2 py-1">
                 <button className="text-red-400" disabled={del.isPending} onClick={() => del.mutate(t.id)}>删除</button>
               </td>
@@ -41,6 +46,7 @@ export function TradeHistoryPage() {
           ))}
         </tbody>
       </table>
+      {trades.data && <div className="text-xs text-slate-500">共 {trades.data.total} 条</div>}
     </div>
   );
 }
