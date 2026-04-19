@@ -22,8 +22,11 @@ from api.v1.schemas.stocks import (
     KLineData,
     StockHistoryResponse,
     StockQuote,
+    StockScreenRequest,
+    StockScreenResponse,
 )
 from api.v1.schemas.common import ErrorResponse
+from data_provider.base import DataFetcherManager
 from src.services.image_stock_extractor import (
     ALLOWED_MIME,
     MAX_SIZE_BYTES,
@@ -34,6 +37,7 @@ from src.services.import_parser import (
     parse_import_from_bytes,
     parse_import_from_text,
 )
+from src.services.stock_screener import StockScreener
 from src.services.stock_service import StockService
 
 logger = logging.getLogger(__name__)
@@ -387,3 +391,23 @@ def get_stock_history(
                 "message": f"获取历史行情失败: {str(e)}"
             }
         )
+
+
+@router.post(
+    "/screen",
+    response_model=StockScreenResponse,
+    summary="按板块筛选股票",
+    description="基于板块/概念名筛选股票，返回符合评分阈值的 Top N（delegates to StockScreener.screen_from_sector）",
+)
+def screen_stocks(request: StockScreenRequest) -> StockScreenResponse:
+    manager = DataFetcherManager()
+    screener = StockScreener(manager=manager)
+    items = screener.screen_from_sector(
+        board_name=request.board_name,
+        board_type=request.board_type,
+        top_n=request.top_n,
+        min_score=request.min_score,
+        min_market_cap=request.min_market_cap,
+        exclude_negative_pe=request.exclude_negative_pe,
+    )
+    return StockScreenResponse(total=len(items), items=items)

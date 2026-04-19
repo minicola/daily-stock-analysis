@@ -1764,9 +1764,35 @@ class AkshareFetcher(BaseFetcher):
             change_col = '涨跌幅'
             name = '板块'
             return _get_rank_top_n(df, change_col, name, n)
-        
+
         except Exception as e:
             logger.error(f"[Akshare] 新浪接口获取板块排行也失败: {e}")
+            return None
+
+    def get_board_constituents(self, board_name: str, board_type: str = "concept") -> Optional[pd.DataFrame]:
+        """获取板块成分股列表"""
+        import akshare as ak
+        try:
+            if board_type == "industry":
+                time.sleep(0.3)
+                df = ak.stock_board_industry_cons_em(symbol=board_name)
+            else:
+                # 概念板块: 先模糊匹配板块名称，再获取成分股
+                time.sleep(0.3)
+                board_list = ak.stock_board_concept_name_em()
+                if board_list is None or board_list.empty:
+                    return None
+                matched = board_list[board_list['板块名称'].str.contains(board_name, na=False)]
+                if matched.empty:
+                    return None
+                exact_name = matched.iloc[0]['板块名称']
+                time.sleep(0.3)
+                df = ak.stock_board_concept_cons_em(symbol=exact_name)
+            if df is not None and not df.empty:
+                return df
+            return None
+        except Exception as e:
+            logger.warning(f"[Akshare] 获取板块成分股失败 ({board_name}): {e}")
             return None
 
 

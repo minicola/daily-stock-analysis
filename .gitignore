@@ -74,7 +74,18 @@ verify_*.py
 !.claude/skills/
 !.claude/skills/**
 
+# Serena MCP 本地配置
+.serena/
+
 # ignore static files
 static/
 /apps/dsa-desktop/dist/
 /apps/dsa-desktop/node_modules/
+/apps/dsa-web/node_modules/
+
+# ensure dsa-viz sub-app's src/lib/ is tracked despite global lib/ rule
+!/apps/dsa-viz/src/lib/
+!/apps/dsa-viz/src/lib/**
+
+# git worktrees (isolated dev workspaces)
+.worktrees/

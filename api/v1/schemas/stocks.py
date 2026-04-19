@@ -94,12 +94,12 @@ class ExtractFromImageResponse(BaseModel):
 
 class StockHistoryResponse(BaseModel):
     """股票历史行情响应"""
-    
+
     stock_code: str = Field(..., description="股票代码")
     stock_name: Optional[str] = Field(None, description="股票名称")
     period: str = Field(..., description="K 线周期")
     data: List[KLineData] = Field(default_factory=list, description="K 线数据列表")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -109,3 +109,30 @@ class StockHistoryResponse(BaseModel):
                 "data": []
             }
         }
+
+
+# --- Stock Screener (MVP: delegates to StockScreener.screen_from_sector) ---
+
+class StockScreenRequest(BaseModel):
+    board_name: str = Field(..., description="板块或概念名称，如 '人工智能' / '半导体'")
+    board_type: str = Field("concept", description="板块类型：concept (概念) / industry (行业)")
+    top_n: int = Field(10, ge=1, le=50)
+    min_score: int = Field(60, ge=0, le=100)
+    min_market_cap: Optional[float] = Field(50e8, description="最小总市值（元）")
+    exclude_negative_pe: bool = True
+
+
+class StockScreenItem(BaseModel):
+    code: str
+    name: str
+    price: float
+    change_pct: float = 0.0
+    pe_ratio: Optional[float] = None
+    total_mv: Optional[float] = None
+    score: int
+    sector: Optional[str] = None
+
+
+class StockScreenResponse(BaseModel):
+    total: int
+    items: List[StockScreenItem]
