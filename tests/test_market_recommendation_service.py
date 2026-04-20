@@ -111,3 +111,43 @@ def test_collect_candidates_returns_empty_when_all_fail(mock_manager, mock_scree
     candidates, warnings = service._collect_candidates(["A", "B", "C"])
     assert candidates == []
     assert len(warnings) == 3
+
+
+def test_build_suggestion_computes_stop_and_target():
+    service = MarketRecommendationService(manager=MagicMock(), screener=MagicMock())
+    entry = _fake_screen_result("600519", "贵州茅台", 78)
+    entry["price"] = 100.0
+    rec = service._build_recommendation(entry)
+    assert rec.code == "600519"
+    assert rec.stop_loss == pytest.approx(97.0, abs=0.01)
+    assert rec.target == pytest.approx(105.0, abs=0.01)
+    assert rec.quantity % 100 == 0
+    assert rec.quantity >= 100
+    assert rec.fee_estimate > 0
+    assert rec.cost_estimate > rec.price * rec.quantity  # 含费
+    assert rec.operation in ("buy", "watch", "hold")
+
+
+def test_build_suggestion_switches_to_watch_when_overheated():
+    service = MarketRecommendationService(manager=MagicMock(), screener=MagicMock())
+    entry = _fake_screen_result("000001", "平安银行", 92)
+    entry["change_pct"] = 8.0  # > 7%
+    rec = service._build_recommendation(entry)
+    assert rec.operation == "watch"
+
+
+def test_generate_end_to_end_success(mock_manager, mock_screener):
+    mock_screener.screen_from_sector.side_effect = [
+        [_fake_screen_result("600519", "贵州茅台", 80)],
+        [_fake_screen_result("002594", "比亚迪", 72)],
+        [_fake_screen_result("601318", "中国平安", 65)],
+    ]
+    service = MarketRecommendationService(manager=mock_manager, screener=mock_screener)
+    result = service.generate("morning")
+    assert result.session == "morning"
+    assert len(result.recommendations) == 3
+    assert result.recommendations[0].code == "600519"
+    assert result.overview.sh_index_value == 3200.5
+    assert "Asia/Shanghai" not in result.generated_at  # ISO with offset
+    assert "+08:00" in result.generated_at
+    assert len(result.risk_notes) >= 1

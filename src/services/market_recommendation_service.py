@@ -56,8 +56,27 @@ class MarketRecommendationService:
         self.screener = screener
 
     def generate(self, session: SessionLiteral) -> RecommendationResult:
-        """生成推荐结果。后续 task 补全。"""
-        raise NotImplementedError
+        if session not in ("morning", "afternoon"):
+            raise ValueError(f"invalid session: {session}")
+
+        overview = self._build_overview()
+        sector_names = [s.name for s in overview.top_sectors]
+        candidates, warnings = self._collect_candidates(sector_names)
+
+        recommendations = [self._build_recommendation(c) for c in candidates]
+        if len(recommendations) < self.FINAL_PICK_LIMIT:
+            warnings.append(
+                f"候选不足 {self.FINAL_PICK_LIMIT} 只（实际 {len(recommendations)} 只）"
+            )
+
+        return RecommendationResult(
+            session=session,
+            generated_at=self._now_iso_shanghai(),
+            overview=overview,
+            recommendations=recommendations,
+            warnings=warnings,
+            risk_notes=list(self.RISK_NOTES),
+        )
 
     def _build_overview(self) -> MarketOverview:
         indices = self.manager.get_main_indices("cn") or []
@@ -109,6 +128,91 @@ class MarketRecommendationService:
                 seen.add(code)
                 unique.append(entry)
         return unique[: self.FINAL_PICK_LIMIT], warnings
+
+    def _build_recommendation(self, entry: dict):
+        from src.schemas.market_recommendation_schema import (
+            RecommendedStock,
+            ScoreBreakdown,
+        )
+
+        price = float(entry.get("price") or 0)
+        change_pct = float(entry.get("change_pct") or 0)
+        score = int(entry.get("score", 0))
+        breakdown_raw = entry.get("breakdown") or {}
+        score_breakdown = ScoreBreakdown(
+            trend=int(breakdown_raw.get("trend", 0)),
+            volume_price=int(breakdown_raw.get("volume_price", 0)),
+            kline=int(breakdown_raw.get("kline", 0)),
+            space=int(breakdown_raw.get("space", 0)),
+            momentum=int(breakdown_raw.get("momentum", 0)),
+            divergence_deduction=int(breakdown_raw.get("divergence_deduction", 0)),
+            total=score,
+        )
+
+        quantity = self._calc_quantity(price)
+        fee = self._calc_buy_fee(price, quantity)
+        cost = price * quantity + fee
+
+        operation = "watch" if change_pct > 7.0 else "buy"
+
+        trend_summary = self._format_trend_summary(score_breakdown)
+        entry_hint = self._format_entry_hint(operation, change_pct)
+        rationale = self._format_rationale(entry, score)
+
+        return RecommendedStock(
+            code=str(entry.get("code", "")),
+            name=str(entry.get("name", "")),
+            price=price,
+            change_pct=change_pct,
+            score=score,
+            score_breakdown=score_breakdown,
+            trend_summary=trend_summary,
+            operation=operation,
+            quantity=quantity,
+            cost_estimate=round(cost, 2),
+            fee_estimate=round(fee, 2),
+            entry_hint=entry_hint,
+            stop_loss=round(price * self.STOP_LOSS_RATIO, 2),
+            target=round(price * self.TARGET_RATIO, 2),
+            rationale=rationale,
+        )
+
+    def _calc_quantity(self, price: float) -> int:
+        if price <= 0:
+            return 0
+        raw = int(self.DEFAULT_POSITION_BUDGET / price)
+        lots = max(1, raw // 100)
+        return lots * 100
+
+    @staticmethod
+    def _calc_buy_fee(price: float, quantity: int) -> float:
+        amount = price * quantity
+        commission = max(amount * 0.00025, 5.0)
+        transfer_fee = amount * 0.00001
+        return commission + transfer_fee
+
+    @staticmethod
+    def _format_trend_summary(sb) -> str:
+        tags = []
+        if sb.trend >= 20:
+            tags.append("均线多头")
+        elif sb.trend >= 10:
+            tags.append("均线部分多头")
+        if sb.volume_price >= 18:
+            tags.append("量价配合良好")
+        if sb.kline >= 15:
+            tags.append("K线偏强")
+        return "+".join(tags) if tags else "趋势中性"
+
+    @staticmethod
+    def _format_entry_hint(operation: str, change_pct: float) -> str:
+        if operation == "watch":
+            return f"当日已涨 {change_pct:.1f}%，建议观望或回调后再介入"
+        return "回踩 MA5/MA10 附近分批介入"
+
+    @staticmethod
+    def _format_rationale(entry: dict, score: int) -> str:
+        return f"五维评分 {score}/100，属领涨板块候选"
 
     @staticmethod
     def _now_iso_shanghai() -> str:
