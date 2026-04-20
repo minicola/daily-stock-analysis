@@ -85,6 +85,31 @@ class MarketRecommendationService:
             limit_down_count=int(stats.get("limit_down_count", 0)),
         )
 
+    def _collect_candidates(self, sector_names: List[str]) -> tuple[list, list[str]]:
+        """对领涨板块逐个筛选，合并去重按评分降序取前 N。"""
+        all_results: list[dict] = []
+        warnings: list[str] = []
+        for sector in sector_names[: self.MAX_SECTORS]:
+            try:
+                hits = self.screener.screen_from_sector(
+                    board_name=sector,
+                    top_n=self.TOP_N_PER_SECTOR,
+                    min_score=self.MIN_SCORE,
+                ) or []
+                all_results.extend(hits)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("screen_from_sector failed for %s: %s", sector, exc)
+                warnings.append(f"板块「{sector}」筛选失败（{type(exc).__name__}）")
+
+        seen: set[str] = set()
+        unique: list[dict] = []
+        for entry in sorted(all_results, key=lambda x: x.get("score", 0), reverse=True):
+            code = entry.get("code")
+            if code and code not in seen:
+                seen.add(code)
+                unique.append(entry)
+        return unique[: self.FINAL_PICK_LIMIT], warnings
+
     @staticmethod
     def _now_iso_shanghai() -> str:
         return datetime.now(SHANGHAI_TZ).isoformat(timespec="seconds")
