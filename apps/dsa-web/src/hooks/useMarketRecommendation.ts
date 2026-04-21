@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { recommendationApi } from '../api/recommendation';
+import { toApiErrorMessage } from '../api/error';
 import type { RecommendationResult, Session } from '../types/recommendation';
 
 const CACHE_VERSION = 'v1';
@@ -98,13 +99,7 @@ export function useMarketRecommendation(): UseMarketRecommendation {
       writeCache(key, fresh);
       setData(fresh);
     } catch (err) {
-      const e = err as { response?: { data?: { detail?: { message?: string }; message?: string } }; message?: string };
-      setError(
-        e?.response?.data?.detail?.message
-          ?? e?.response?.data?.message
-          ?? e?.message
-          ?? '生成失败，请重试',
-      );
+      setError(toApiErrorMessage(err, '生成失败，请重试'));
     } finally {
       setLoading(false);
     }
@@ -122,12 +117,24 @@ export function useMarketRecommendation(): UseMarketRecommendation {
 
   const switchSession = useCallback(async (s: Session) => {
     setSession(s);
-    await load(s);
+    if (inflight.current) {
+      await inflight.current;
+    }
+    const p = load(s);
+    inflight.current = p.finally(() => {
+      if (inflight.current === p) inflight.current = null;
+    });
+    await p;
   }, [load]);
 
   const regenerate = useCallback(async () => {
+    if (inflight.current) return;
     localStorage.removeItem(cacheKey(session));
-    await load(session, true);
+    const p = load(session, true);
+    inflight.current = p.finally(() => {
+      if (inflight.current === p) inflight.current = null;
+    });
+    await p;
   }, [load, session]);
 
   return { isOpen, session, data, loading, error, isNonTradingDay, open, close, switchSession, regenerate };
