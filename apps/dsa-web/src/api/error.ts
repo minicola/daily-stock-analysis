@@ -402,6 +402,16 @@ export function parseApiError(error: unknown): ParsedApiError {
     });
   }
 
+  if (errorCode === 'DATA_SOURCE_UNAVAILABLE') {
+    return createParsedApiError({
+      title: '市场数据暂时不可用',
+      message: rawMessage,
+      rawMessage,
+      status,
+      category: 'http_error',
+    });
+  }
+
   if (
     status === 502
     || status === 503

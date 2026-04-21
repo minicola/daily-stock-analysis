@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### 新功能
 
+- 📊 **Web: 首页「今日推荐」抽屉**（2026-04-20）— HomePage 新增推荐入口按钮，点击弹出侧边抽屉，按 Asia/Shanghai 时间自动选择上午盘（< 11:30）/ 下午盘，实时生成 3 只个股推荐；结果缓存到浏览器 `localStorage`（键 `dsa:recommendation:v1:{date}:{session}`，当日当时段复用，跨日跨时段自动失效）；支持手动切换时段和「重新生成」刷新。
+- 🔌 **API: `POST /api/v1/market/recommendations`**（2026-04-20）— 接受 `{ session: "morning" | "afternoon" }` body；复用 `DataFetcherManager` + `StockScreener`，基于领涨板块前 3 通过五维评分筛选并生成操作建议（止损、目标价、买入类型）；20 秒硬超时；提供 200 / 400 / 503 / 504 结构化错误响应。
 - 🖥️ **DSA Viz 桌面可视化前端** — 新增 `apps/dsa-viz/`，基于 Vite + React + TS + KLineChart + ECharts，覆盖每日仪表盘、K 线行情、交互式组合管理（交易 / CSV / 资金流水 / 公司行为）、账户 CRUD、板块选股和分析报告查看页面；与现有 `apps/dsa-web/` 并存，桌面壳默认加载新 UI。
 - 🧮 **`POST /api/v1/stocks/screen` 选股 API** — 代理到 `StockScreener.screen_from_sector`，为新 Viz UI 提供按板块 / 概念筛选的能力，保留原有选股链路不变。
 - 🔀 **`DSA_DESKTOP_ENTRY` 环境变量** — `apps/dsa-desktop/main.js` 可通过该变量切换桌面窗口入口：`viz`（默认，新 UI）或 `web`（回退到旧版 dsa-web UI）。
