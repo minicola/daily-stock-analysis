@@ -151,3 +151,28 @@ def test_generate_end_to_end_success(mock_manager, mock_screener):
     assert "Asia/Shanghai" not in result.generated_at  # ISO with offset
     assert "+08:00" in result.generated_at
     assert len(result.risk_notes) >= 1
+
+
+def test_generate_raises_when_overview_unavailable(mock_screener):
+    m = MagicMock()
+    m.get_main_indices.return_value = []  # 触发 MarketDataUnavailable
+    service = MarketRecommendationService(manager=m, screener=mock_screener)
+    with pytest.raises(MarketDataUnavailable):
+        service.generate("morning")
+
+
+def test_generate_returns_empty_recommendations_when_all_sectors_fail(
+    mock_manager, mock_screener,
+):
+    mock_screener.screen_from_sector.side_effect = RuntimeError("net")
+    service = MarketRecommendationService(manager=mock_manager, screener=mock_screener)
+    result = service.generate("afternoon")
+    assert result.recommendations == []
+    assert any("候选不足" in w for w in result.warnings)
+    assert any("筛选失败" in w for w in result.warnings)
+
+
+def test_generate_rejects_invalid_session(mock_manager, mock_screener):
+    service = MarketRecommendationService(manager=mock_manager, screener=mock_screener)
+    with pytest.raises(ValueError):
+        service.generate("evening")  # type: ignore[arg-type]
