@@ -176,3 +176,12 @@ def test_generate_rejects_invalid_session(mock_manager, mock_screener):
     service = MarketRecommendationService(manager=mock_manager, screener=mock_screener)
     with pytest.raises(ValueError):
         service.generate("evening")  # type: ignore[arg-type]
+
+
+def test_generate_with_timeout_raises_on_slow_generate(mock_manager, mock_screener):
+    import time
+    mock_screener.screen_from_sector.side_effect = lambda **_: (time.sleep(1), [])[1]
+    service = MarketRecommendationService(manager=mock_manager, screener=mock_screener)
+    from src.services.market_recommendation_service import RecommendationTimeout
+    with pytest.raises(RecommendationTimeout):
+        service.generate_with_timeout("morning", timeout_seconds=0.1)  # type: ignore[arg-type]

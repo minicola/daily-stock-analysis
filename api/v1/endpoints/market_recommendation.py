@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from src.schemas.market_recommendation_schema import (
     RecommendationResult,
-    SessionLiteral,
 )
 from src.services.market_recommendation_service import (
     MarketDataUnavailable,
@@ -50,7 +49,7 @@ async def post_recommendations(payload: RecommendationRequest) -> Recommendation
         )
     try:
         service = _build_service()
-        return service.generate(payload.session)  # type: ignore[arg-type]
+        return service.generate_with_timeout(payload.session)  # type: ignore[arg-type]
     except MarketDataUnavailable as exc:
         logger.warning("market recommendation data unavailable: %s", exc)
         raise HTTPException(

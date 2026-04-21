@@ -43,7 +43,7 @@ def test_post_recommendations_returns_200(client):
         "api.v1.endpoints.market_recommendation._build_service"
     ) as mock_factory:
         svc = MagicMock()
-        svc.generate.return_value = fake_result
+        svc.generate_with_timeout.return_value = fake_result
         mock_factory.return_value = svc
         res = client.post(
             "/api/v1/market/recommendations", json={"session": "morning"},
@@ -56,7 +56,7 @@ def test_post_recommendations_503_when_data_unavailable(client):
     from src.services.market_recommendation_service import MarketDataUnavailable
     with patch("api.v1.endpoints.market_recommendation._build_service") as mock_factory:
         svc = MagicMock()
-        svc.generate.side_effect = MarketDataUnavailable("boom")
+        svc.generate_with_timeout.side_effect = MarketDataUnavailable("boom")
         mock_factory.return_value = svc
         res = client.post(
             "/api/v1/market/recommendations", json={"session": "morning"},

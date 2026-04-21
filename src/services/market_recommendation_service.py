@@ -10,9 +10,10 @@
 """
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+from typing import List
 
 from src.schemas.market_recommendation_schema import (
     MarketOverview,
@@ -77,6 +78,19 @@ class MarketRecommendationService:
             warnings=warnings,
             risk_notes=list(self.RISK_NOTES),
         )
+
+    def generate_with_timeout(
+        self, session: SessionLiteral, timeout_seconds: float = 20.0
+    ) -> RecommendationResult:
+        """用 ThreadPoolExecutor 包裹 generate()，强制执行超时限制。"""
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self.generate, session)
+            try:
+                return future.result(timeout=timeout_seconds)
+            except concurrent.futures.TimeoutError:
+                raise RecommendationTimeout(
+                    f"推荐生成超过 {timeout_seconds} 秒未完成"
+                )
 
     def _build_overview(self) -> MarketOverview:
         indices = self.manager.get_main_indices("cn") or []
