@@ -56,7 +56,7 @@ describe('RecommendationDrawer', () => {
     (recommendationApi.fetch as any).mockRejectedValue(new Error('boom'));
     render(<RecommendationDrawer isOpen={true} onClose={() => {}} />);
     await waitFor(() => expect(screen.getByText(/boom|生成失败/)).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: /重试|重新生成/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '重试' })).toBeInTheDocument();
   });
 
   it('closes when Esc pressed', async () => {

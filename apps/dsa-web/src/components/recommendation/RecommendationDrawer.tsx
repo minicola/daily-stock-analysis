@@ -44,16 +44,14 @@ export const RecommendationDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
             ) : null}
           </div>
           <div className="flex items-center gap-2">
-            {!error ? (
-              <button
-                type="button"
-                onClick={() => void regenerate()}
-                disabled={loading || isNonTradingDay}
-                className="text-xs text-secondary-text hover:text-foreground disabled:opacity-50"
-              >
-                重新生成
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => void regenerate()}
+              disabled={loading || isNonTradingDay}
+              className="text-xs text-secondary-text hover:text-foreground disabled:opacity-50"
+            >
+              重新生成
+            </button>
             <button
               type="button"
               onClick={onClose}
