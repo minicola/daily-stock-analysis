@@ -542,9 +542,8 @@ async function createWindow() {
       onHealthProgress
     );
     logStartup(`Backend ready in ${healthInfo.elapsedMs}ms (${healthInfo.attempts} probes)`);
-    const entryPath = process.env.DSA_DESKTOP_ENTRY === "web" ? "/" : "/viz/";
-    const loadTarget = `http://127.0.0.1:${port}${entryPath}`;
-    logStartup(`Loading entry ${loadTarget} (DSA_DESKTOP_ENTRY=${process.env.DSA_DESKTOP_ENTRY || "viz"})`);
+    const loadTarget = `http://127.0.0.1:${port}/`;
+    logStartup(`Loading entry ${loadTarget}`);
     const mainPageStartedAt = Date.now();
     await mainWindow.loadURL(loadTarget);
     logStartup(`Main page loadURL resolved in ${Date.now() - mainPageStartedAt}ms`);

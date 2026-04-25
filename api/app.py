@@ -190,39 +190,6 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
         )
     
     # ============================================================
-    # 静态文件托管（dsa-viz 可视化前端）
-    # ============================================================
-    # 注意：viz 挂载必须在 dsa-web 的 SPA 贪婪 fallback 之前注册，
-    # 否则 "/{full_path:path}" 会拦截 /viz/* 请求。
-
-    viz_dist_env = os.environ.get("DSA_VIZ_DIST")
-    if viz_dist_env:
-        viz_dist = Path(viz_dist_env)
-    else:
-        # 默认基于 __file__ 解析到仓库根的 apps/dsa-viz/dist，
-        # 保证无论 uvicorn/PyInstaller 从哪个工作目录启动都能定位到构建产物；
-        # 如需覆盖，可通过 DSA_VIZ_DIST 显式指定。
-        viz_dist = Path(__file__).resolve().parent.parent / "apps" / "dsa-viz" / "dist"
-
-    if viz_dist.exists():
-        viz_assets = viz_dist / "assets"
-        if viz_assets.exists():
-            app.mount("/viz/assets", StaticFiles(directory=viz_assets), name="viz_assets")
-
-        @app.get("/viz", include_in_schema=False)
-        @app.get("/viz/", include_in_schema=False)
-        @app.get("/viz/{full_path:path}", include_in_schema=False)
-        async def serve_viz(full_path: str = ""):
-            """dsa-viz SPA 路由回退 - 服务 apps/dsa-viz/dist 下的静态资源。"""
-            if full_path.startswith("api") or full_path.startswith("assets"):
-                return JSONResponse(status_code=404, content={"error": "not_found"})
-            candidate = viz_dist / full_path
-            if candidate.is_file():
-                content_type, _ = mimetypes.guess_type(str(candidate))
-                return FileResponse(candidate, media_type=content_type)
-            return FileResponse(viz_dist / "index.html")
-
-    # ============================================================
     # 静态文件托管（前端 SPA）
     # ============================================================
 

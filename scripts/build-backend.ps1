@@ -8,14 +8,6 @@ if (!(Test-Path 'node_modules')) {
 npm run build
 Pop-Location
 
-Write-Host 'Building DSA Viz UI...'
-Push-Location 'apps\dsa-viz'
-if (!(Test-Path 'node_modules')) {
-  npm install
-}
-npm run build
-Pop-Location
-
 $pythonBin = $env:PYTHON_BIN
 if ([string]::IsNullOrWhiteSpace($pythonBin)) {
   $pythonBin = 'python'
@@ -114,7 +106,6 @@ $pyInstallerArgs = @(
   '--noconfirm',
   '--noconsole',
   '--add-data', 'static;static',
-  '--add-data', 'apps\dsa-viz\dist;apps/dsa-viz/dist',
   '--collect-data', 'litellm',
   '--collect-data', 'tiktoken'
 )
