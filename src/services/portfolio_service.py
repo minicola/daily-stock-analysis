@@ -951,6 +951,23 @@ class PortfolioService:
         total_cost_base = 0.0
         fx_stale = False
 
+        name_manager: Any = None
+        name_cache: Dict[str, Optional[str]] = {}
+
+        def _resolve_name(sym: str) -> Optional[str]:
+            if sym in name_cache:
+                return name_cache[sym]
+            nonlocal name_manager
+            try:
+                if name_manager is None:
+                    from data_provider.base import DataFetcherManager
+                    name_manager = DataFetcherManager()
+                resolved = name_manager.get_stock_name(sym, allow_realtime=False)
+            except Exception:
+                resolved = None
+            name_cache[sym] = resolved
+            return resolved
+
         keys: Iterable[Tuple[str, str, str]]
         if cost_method == "fifo":
             keys = list(fifo_lots.keys())
@@ -1010,6 +1027,7 @@ class PortfolioService:
             position_rows.append(
                 {
                     "symbol": symbol,
+                    "name": _resolve_name(symbol),
                     "market": market,
                     "currency": currency,
                     "quantity": round(qty, 8),

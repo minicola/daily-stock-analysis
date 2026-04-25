@@ -29,6 +29,7 @@ export interface PortfolioAccountCreateRequest {
 
 export interface PortfolioPositionItem {
   symbol: string;
+  name?: string | null;
   market: string;
   currency: string;
   quantity: number;
