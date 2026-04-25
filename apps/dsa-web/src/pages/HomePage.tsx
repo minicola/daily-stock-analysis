@@ -7,7 +7,6 @@ import { StockAutocomplete } from '../components/StockAutocomplete';
 import { HistoryList } from '../components/history';
 import { ReportMarkdown, ReportSummary } from '../components/report';
 import { TaskPanel } from '../components/tasks';
-import { RecommendationDrawer } from '../components/recommendation';
 import { useDashboardLifecycle, useHomeDashboardState } from '../hooks';
 import { getReportText, normalizeReportLanguage } from '../utils/reportLanguage';
 
@@ -15,7 +14,6 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [recommendationOpen, setRecommendationOpen] = useState(false);
 
   const {
     query,
@@ -178,14 +176,6 @@ const HomePage: React.FC = () => {
                 <p className="absolute -bottom-4 left-0 text-xs text-warning">{duplicateError}</p>
               ) : null}
             </div>
-            <button
-              type="button"
-              onClick={() => setRecommendationOpen(true)}
-              className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-2 py-1 text-xs text-secondary-text transition-colors hover:bg-hover hover:text-foreground"
-              title="今日推荐"
-            >
-              📊 今日推荐
-            </button>
             <label className="flex flex-shrink-0 cursor-pointer items-center gap-1 text-xs text-secondary-text select-none">
               <input
                 type="checkbox"
@@ -291,11 +281,6 @@ const HomePage: React.FC = () => {
           </section>
         </div>
       </div>
-
-      <RecommendationDrawer
-        isOpen={recommendationOpen}
-        onClose={() => setRecommendationOpen(false)}
-      />
 
       {markdownDrawerOpen && selectedReport?.meta.id ? (
         <ReportMarkdown
