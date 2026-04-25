@@ -242,3 +242,12 @@ gh run view <run_id> --log-failed
 - 自动 tag 默认不触发，只有 commit title 包含 `#patch`、`#minor`、`#major` 才会触发版本号更新。
 - 手动打 tag 必须使用 annotated tag。
 - 用户可见变更优先通过 PR 合入，并补齐 label 与验证说明。
+
+## Data Integrity
+
+- When generating reports or analysis, NEVER use fabricated, placeholder, or outdated data. If real-time data cannot be fetched, explicitly state the failure and stop rather than generating fake numbers.
+- When asked to regenerate or update a report, always fetch fresh data. Never reuse cached or previous session data unless explicitly told to.
+
+## Work Style
+
+- Prioritize action over exploration. When given a task with a clear deliverable (e.g., analyze a PDF, test connectivity), produce output quickly rather than spending time on setup, scaffolding, or extensive codebase reading.

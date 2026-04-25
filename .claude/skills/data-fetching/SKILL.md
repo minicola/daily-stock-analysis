@@ -158,6 +158,72 @@ if df is not None and not df.empty:
 - 单个数据源失败会自动切换到下一个
 - 有熔断机制，连续失败会暂时跳过该数据源
 
+## 🚀 批量行情快速路径（盘中分析必备）
+
+**核心经验**：`manager.get_realtime_quote(code)` 是单只调用；当 efinance 的腾讯/新浪上游挂掉时会降级到 akshare 单票扫描，**单只可能耗时 5-15 分钟**。盘中批量分析持仓+候选股时，**不要循环调用** `get_realtime_quote`。
+
+### 推荐路径（按速度排序）
+
+| 场景 | 推荐接口 | 耗时 | 备注 |
+|------|----------|------|------|
+| 10-50 只特定股票实时行情 | `efinance.stock.get_latest_quote(codes_list)` | **秒级** | 返回 DataFrame，索引列名是 `代码`（**不是 `股票代码`**） |
+| 全 A 快照（5000+只） | `akshare.stock_zh_a_spot_em()` | **~5 分钟**（58 批 × 5s） | 稳但慢，适合开盘前/收盘后全量扫描 |
+| ETF 批量快照 | `akshare.fund_etf_spot_em()` | ~2-3 分钟 | 同上 |
+| 1-3 只股票 | `manager.get_realtime_quote(code)` | 1-30 秒 | 走完整降级链 |
+
+### efinance 批量接口用法
+
+```python
+import efinance as ef
+
+codes = ['600096', '002064', '603605', '002415', '518800']  # 混合A股+ETF
+df = ef.stock.get_latest_quote(codes)  # 秒级返回
+
+# 关键列：代码、名称、最新价、涨跌幅、涨跌额、最高、最低、今开、
+#        量比、换手率、成交量、成交额、昨日收盘、总市值、流通市值
+
+df = df.set_index('代码')  # ⚠️ 注意是 '代码'，不是 '股票代码'
+for code in codes:
+    row = df.loc[code]
+    print(f"{row['名称']}: {row['最新价']} {row['涨跌幅']:+.2f}%")
+```
+
+### 接口降级应对
+
+**症状**：日志出现 `qt.gtimg.cn` 或 `hq.sinajs.cn` `RemoteDisconnected` / `ReadTimeout`；或 `efinance` 报 `Expecting value: line 1 column 1`。
+
+**行动**：
+1. **不要对 `manager.get_realtime_quote` 加重试循环** — 降级链本身已在跑，重试只会放大延迟
+2. 立即切换到 `ef.stock.get_latest_quote(codes_list)` 批量接口
+3. 若 efinance 也不可用，尝试 `akshare.stock_zh_a_spot_em()`（慢但稳）
+4. 最后降级：用 `manager.get_daily_data(code, days=5)` 取日 K 最后一条的 `close` 作为当前价（精度下降但能出结果）
+
+### 何时不需要精确实时价
+
+进行**五维评分**时，如果拿不到实时价，**直接用日K线最后一条的 close** 即可 — 评分框架主要依赖过去 30 日的均线/量价结构，当前价只影响 `bias10` 和 `dist_high30/low30` 三个细项，误差可接受。
+
+```python
+df, source = manager.get_daily_data(code, days=35)
+price = float(df['close'].iloc[-1])  # 降级取日K收盘
+score = StockScreener.score_five_dimensions(df, realtime_price=price)
+```
+
+## ⚠️ 五维评分的局限：板块突发爆发场景
+
+`StockScreener.score_five_dimensions` 评分偏重**过去 30 日趋势延续性**，对「今日放量启动但过去 5 日下跌」的突发标的不友好。典型案例：
+
+| 股票 | 今日涨幅 | 过去5日 | 五维分 | 真实信号 |
+|------|---------|---------|--------|---------|
+| 天齐锂业 | +8.65% | -6.84% | 24 | 板块龙头爆发 |
+| 赣锋锂业 | +6.10% | -6.84% | 24 | 同上 |
+| 盐湖股份 | +4.90% | -7.52% | 28 | 同上 |
+
+这类标的评分会严重低于推荐阈值 60 分，但板块资金刚启动时反而是最佳介入点。**应对**：
+
+- 严格按 skill 规则推荐（评分≥60）时，**主动标注"因过去 5 日跌幅导致评分偏低"**
+- 给用户提供「保守派（按评分）」+「进取派（跟主线）」双方案，由用户决策
+- 下次该股票评分更新（过去 5 日窗口滑过下跌区）后再正式进入推荐池
+
 ## 示例：获取市场概览
 
 ```python
