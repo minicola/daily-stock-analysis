@@ -1,0 +1,27 @@
+# Core dependencies for stock-analysis skill
+# Python 3.10+ required
+
+# Stock data processing (Chinese A-shares)
+# Main package for technical analysis
+# PyPI official source: https://pypi.org/project/aishare-txt/
+aishare-txt>=0.1.0
+
+# Technical analysis indicators
+# Note: TA-Lib requires system-level installation first
+# Windows: https://github.com/cgohlke/talib-build
+# Linux: sudo apt-get install ta-lib
+# macOS: brew install ta-lib
+TA-Lib>=0.4.26
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.21.0
+scipy>=1.9.0
+
+# HTTP requests
+requests>=2.28.0
+
+# Optional: AI analysis (requires API keys)
+# Uncomment if you want to use AI features
+# openai>=1.0.0
+# zhipuai>=2.0.0

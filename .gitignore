@@ -56,6 +56,7 @@ reports/
 
 # 系统文件
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # 测试
@@ -73,6 +74,9 @@ verify_*.py
 .claude/*
 !.claude/skills/
 !.claude/skills/**
+# (must come after the !.claude/skills/** unignore, otherwise the
+# global **/.DS_Store rule cannot reach files inside skills/)
+.claude/skills/**/.DS_Store
 
 # Serena MCP 本地配置
 .serena/
@@ -81,11 +85,21 @@ verify_*.py
 static/
 /apps/dsa-desktop/dist/
 /apps/dsa-desktop/node_modules/
+/apps/dsa-desktop/package-lock.json
 /apps/dsa-web/node_modules/
 
-# ensure dsa-viz sub-app's src/lib/ is tracked despite global lib/ rule
-!/apps/dsa-viz/src/lib/
-!/apps/dsa-viz/src/lib/**
+# Root-level npm artifacts from `npm install @anthropic-ai/claude-code`
+# (Claude Code lives outside this project's source tree.)
+/node_modules/
+/package.json
+/package-lock.json
+
+# Local debug / personal seed scripts (not project source)
+# - check_holdings.py / fetch_market_data.py: ad-hoc debug runners
+# - scripts/seed_my_portfolio.py: contains private trade data
+/check_holdings.py
+/fetch_market_data.py
+/scripts/seed_my_portfolio.py
 
 # git worktrees (isolated dev workspaces)
 .worktrees/
